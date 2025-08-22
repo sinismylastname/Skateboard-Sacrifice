@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://qw0arxvjuom5"]
+
+[ext_resource type="Texture2D" uid="uid://c832cpx1dt4qs" path="res://images/redPlatform.png" id="1_ba0x2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nlgqw"]
+size = Vector2(1140, 94)
+
+[node name="Platform" type="Node2D"]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(574, 515)
+shape = SubResource("RectangleShape2D_nlgqw")
+
+[node name="Sprite2D" type="Sprite2D" parent="StaticBody2D"]
+position = Vector2(573, 516)
+scale = Vector2(1.27703, 1.04651)
+texture = ExtResource("1_ba0x2")

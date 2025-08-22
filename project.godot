@@ -13,7 +13,7 @@ config_version=5
 config/name="Sugar Blitz"
 run/main_scene="uid://dicqsq7pcm81c"
 config/features=PackedStringArray("4.4", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://images/icon.svg"
 
 [editor_plugins]
 
