@@ -1,6 +1,6 @@
 extends CharacterBody2D
 
-var screenWidth = 1152
+
 
 var horiDirection = Input.get_axis("left", "right")
 var allDirection = Input.get_vector("left","right","lookUp","lookDown")
@@ -157,10 +157,5 @@ func _physics_process(delta):
 	
 
 #screen teleport logic 
-	if position.x < 0:
-		position.x = screenWidth - 15
-	if position.x > screenWidth:
-		position.x = 0
-	
-	print(velocity)
+
 	move_and_slide()

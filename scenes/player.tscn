@@ -1,7 +1,13 @@
-[gd_scene load_steps=10 format=3 uid="uid://b725qhgke4ac4"]
+[gd_scene load_steps=16 format=3 uid="uid://b725qhgke4ac4"]
 
-[ext_resource type="Script" uid="uid://kpfqy50lo3cu" path="res://scenes/player.gd" id="1_g2els"]
+[ext_resource type="Script" uid="uid://qr0ebmeg4am3" path="res://script/character_body_2d.gd" id="1_onrkg"]
 [ext_resource type="Texture2D" uid="uid://b6lscprlm2epn" path="res://resources/Motion_animations_1_Spritelist.png" id="2_g2els"]
+[ext_resource type="Script" uid="uid://b6nerwxhnx28l" path="res://scenes/states.gd" id="3_qhqgy"]
+[ext_resource type="Script" uid="uid://c0bvtu3v72qfj" path="res://scenes/IdleState.gd" id="4_dqkch"]
+[ext_resource type="Script" uid="uid://bp5hhtkhivfgw" path="res://scenes/RunState.gd" id="5_qlg0r"]
+[ext_resource type="Script" uid="uid://daecd6o58idvm" path="res://scenes/JumpState.gd" id="6_tuyoq"]
+[ext_resource type="Script" uid="uid://c488hoho83rgy" path="res://scenes/JumpPeakState.gd" id="7_fjrip"]
+[ext_resource type="Script" uid="uid://bs2aaw2r0p18s" path="res://scenes/FallState.gd" id="8_smehm"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_e80uo"]
 size = Vector2(23, 49.3623)
@@ -102,7 +108,7 @@ _data = {
 }
 
 [node name="Player" type="CharacterBody2D"]
-script = ExtResource("1_g2els")
+script = ExtResource("1_onrkg")
 
 [node name="Collider" type="CollisionShape2D" parent="."]
 position = Vector2(11.5, 24.6812)
@@ -120,3 +126,26 @@ vframes = 10
 libraries = {
 &"": SubResource("AnimationLibrary_qlg0r")
 }
+
+[node name="Camera" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+
+[node name="StateMachine" type="Node2D" parent="."]
+script = ExtResource("3_qhqgy")
+
+[node name="Locked" type="Node2D" parent="StateMachine"]
+
+[node name="Idle" type="Node2D" parent="StateMachine"]
+script = ExtResource("4_dqkch")
+
+[node name="Run" type="Node2D" parent="StateMachine"]
+script = ExtResource("5_qlg0r")
+
+[node name="Jump" type="Node2D" parent="StateMachine"]
+script = ExtResource("6_tuyoq")
+
+[node name="JumpPeak" type="Node2D" parent="StateMachine"]
+script = ExtResource("7_fjrip")
+
+[node name="Fall" type="Node2D" parent="StateMachine"]
+script = ExtResource("8_smehm")
