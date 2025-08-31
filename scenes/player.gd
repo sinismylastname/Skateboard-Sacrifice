@@ -2,9 +2,7 @@ extends CharacterBody2D
 
 #region Variables
 #need states for a lot of stuff, like start_dash, mid_dash, end_dash
-enum playerState {idle, run, jump_start, jump_air, fall, dash}
 
-var state = playerState.idle
 var playerVelocity = Vector2.ZERO
 var yDirection = Input.get_axis("right", "left")
 var xDirection = Input.get_axis("left", "right")
@@ -41,50 +39,30 @@ var previousState = null
 	#region Idle Handling
 func handleIdle():
 	if is_on_floor():
-		jumpCounter = amtOfJumps
 		ChangeState(States.Idle)
 #endregion
 	#region Jump Handling
-func handleJump_Start():
-	jumpCounter -= 1
-	velocity.y = jumpPower
-	state = playerState.jump_air
-func handleJump_Air():
-	playerVelocity.x = xDirection * runSpeed
-	velocity.x = playerVelocity.x
-	if is_on_floor():
-		state = playerState.idle
-		return
-	if jumpCounter > 0 and keyJumpPressed:
-		state = playerState.jump_start
-		return
-	elif velocity.y > 0:
-		state = playerState.fall
+func handleJump():
+	if keyJumpPressed and jumpCounter > 0:
+		ChangeState(States.Jump)
 
-#endregion
-	#region Run Handling
 func handleHorizontalMovement():
-	jumpCounter = amtOfJumps
 	if xDirection:
 		playerVelocity.x = xDirection * runSpeed
 		velocity.x = move_toward(velocity.x, playerVelocity.x, acceleration)
 	else:
 		velocity.x = move_toward(velocity.x, 0, runSpeed)
-	if keyJumpPressed and jumpCounter > 0:
-		state = playerState.jump_start
-	if not Input.is_anything_pressed():
-		state = playerState.idle
-#endregion
-	#region Fall Handling
+
 func handleFall():
 	if !is_on_floor():
 		ChangeState(States.Fall)
-#endregion
-	#region Dash Handling
+
+func handleLanding():
+	if is_on_floor():
+		ChangeState(States.Idle)
+
 func handleDash():
 	pass
-#endregion
-#endregion
 
 func _ready():
 	for state in States.get_children():
@@ -95,7 +73,7 @@ func _ready():
 
 func handleGravity(delta, gravity: float = gravityForce):
 	if not is_on_floor():
-		velocity += gravity * delta
+		velocity.y += gravity * delta
 
 func getInputStates():
 	xDirection = Input.get_axis("left", "right")
@@ -110,18 +88,6 @@ func getInputStates():
 	if keyRight: directionFacing = 1
 	if keyLeft: directionFacing = -1
 
-func handleAnimation():
-	if is_on_floor():
-		if velocity.x != 0:
-			Animator.play("walk")
-		else:
-			Animator.play("idle")
-	else:
-		if velocity.y < 0:
-			Animator.play("fall") #jump anim is bugged rn
-		else:
-			Animator.play("fall")
-
 func handleFlipH():
 	Sprite.flip_h = (directionFacing < 0)
 
@@ -132,36 +98,14 @@ func ChangeState(newState):
 	if newState != null:
 		previousState = currentState
 		currentState = newState
-		previousState = newState
 		previousState.ExitState()
-		currentState.EndState()
-		print("State Change From " + previousState + " to: " + currentState)
+		currentState.EnterState()
+		print("State Change From " + previousState.Name + " to: " + currentState.Name)
 		
 
 func _physics_process(delta):
 	getInputStates()
 	handleGravity(delta)
-	handleAnimation()
 	handleFlipH()
-	currentState.Update()
-	
-	match state:
-		playerState.idle:
-			handleIdle()
-			
-		playerState.jump_start:
-			handleJump_Start()
-			
-		playerState.jump_air:
-			handleJump_Air()
-				
-		playerState.run:
-			handleHorizontalMovement()
-				
-		playerState.fall:
-			handleFall()
-			
-		playerState.dash:
-			handleDash()
-				
+	currentState.Update(delta)
 	move_and_slide()
