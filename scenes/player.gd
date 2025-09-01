@@ -9,9 +9,11 @@ var xDirection = Input.get_axis("left", "right")
 var allDirection = Input.get_vector("left", "right", "lookUp", "lookDown")
 var directionFacing = 1
 
-var runSpeed = 400
-var gravityForce = 980
-var acceleration = 40
+var runSpeed := 400
+var gravityForceJump := 980
+var gravityForceFall := 1280
+var terminalVelocity := 1600
+var acceleration := 40
 
 var keyUp = false
 var keyDown = false
@@ -20,9 +22,12 @@ var keyRight = false
 var keyJump = false
 var keyJumpPressed = false
 
-var amtOfJumps = 2
+var amtOfJumps = 1
 var jumpCounter = amtOfJumps
-var jumpPower = -400
+var jumpPower = -525
+var variableJumpMultiplier := 0.75
+var jumpBufferTime = 0.45
+var coyoteTime = 0.1
 
 var currentState = null
 var previousState = null
@@ -32,8 +37,17 @@ var previousState = null
 @onready var Animator = $Animator
 @onready var Camera = $Camera
 @onready var States = $StateMachine
-
+@onready var jumpBufferTimer = $Timers/JumpBufferTimer
+@onready var coyoteTimer = $Timers/CoyoteTimer
 #endregion
+
+func _ready():
+	Engine.time_scale = 1 #Slow or speed up the engine speed, for debugging
+	for state in States.get_children():
+		state.States = States
+		state.Player = self
+	previousState = States.Fall
+	currentState = States.Fall
 
 #region State Handling
 	#region Idle Handling
@@ -43,8 +57,30 @@ func handleIdle():
 #endregion
 	#region Jump Handling
 func handleJump():
-	if keyJumpPressed and jumpCounter > 0:
-		ChangeState(States.Jump)
+	if is_on_floor():
+		if jumpCounter > 0:
+			if keyJumpPressed:
+				jumpBufferTimer.stop()
+				jumpCounter -= 1
+				ChangeState(States.Jump)
+			if (jumpBufferTimer.time_left > 0):
+				jumpCounter -= 1
+				jumpBufferTimer.stop()
+				ChangeState(States.Jump)
+	else:
+		if jumpCounter > 0 and jumpCounter < amtOfJumps and keyJumpPressed:
+			jumpCounter -= 1
+			ChangeState(States.Jump)
+			
+		if coyoteTimer.time_left > 0:
+			if keyJumpPressed and jumpCounter > 0:
+				coyoteTimer.stop()
+				jumpCounter -= 1
+				ChangeState(States.Jump)
+
+func handleJumpBuffer():
+	if keyJumpPressed:
+		jumpBufferTimer.start(jumpBufferTime)
 
 func handleHorizontalMovement():
 	if xDirection:
@@ -55,6 +91,7 @@ func handleHorizontalMovement():
 
 func handleFall():
 	if !is_on_floor():
+		coyoteTimer.start(coyoteTime)
 		ChangeState(States.Fall)
 
 func handleLanding():
@@ -64,16 +101,12 @@ func handleLanding():
 func handleDash():
 	pass
 
-func _ready():
-	for state in States.get_children():
-		state.States = States
-		state.Player = self
-	previousState = States.Fall
-	currentState = States.Fall
-
-func handleGravity(delta, gravity: float = gravityForce):
+func handleGravity(delta, gravity: float = gravityForceJump):
 	if not is_on_floor():
 		velocity.y += gravity * delta
+
+func handleTerminalVelocity():
+	if velocity.y > terminalVelocity: velocity.y = terminalVelocity
 
 func getInputStates():
 	xDirection = Input.get_axis("left", "right")
@@ -100,12 +133,14 @@ func ChangeState(newState):
 		currentState = newState
 		previousState.ExitState()
 		currentState.EnterState()
-		print("State Change From " + previousState.Name + " to: " + currentState.Name)
+		return
+		#print("State Change From " + previousState.Name + " to: " + currentState.Name)
 		
 
 func _physics_process(delta):
 	getInputStates()
 	handleGravity(delta)
 	handleFlipH()
+	handleTerminalVelocity()
 	currentState.Update(delta)
 	move_and_slide()

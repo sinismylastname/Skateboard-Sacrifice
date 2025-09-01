@@ -134,7 +134,7 @@ sources/0 = SubResource("TileSetAtlasSource_h2yge")
 [node name="Main" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_ig7tw")]
-position = Vector2(453, 113)
+position = Vector2(457, -87)
 scale = Vector2(1.5, 1.5)
 
 [node name="TileMapLayer" type="TileMapLayer" parent="."]

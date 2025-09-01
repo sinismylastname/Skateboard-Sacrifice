@@ -2,6 +2,7 @@ extends PlayerState
 
 func EnterState():
 	Name = "Idle"
+	Player.jumpCounter = Player.amtOfJumps
 	
 func ExitState():
 	pass

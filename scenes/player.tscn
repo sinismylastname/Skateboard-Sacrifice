@@ -66,7 +66,7 @@ tracks/0/keys = {
 
 [sub_resource type="Animation" id="Animation_qlg0r"]
 resource_name = "jump"
-length = 0.2333
+length = 2.0
 step = 0.0167
 tracks/0/type = "value"
 tracks/0/imported = false
@@ -131,23 +131,31 @@ libraries = {
 [node name="Camera" type="Camera2D" parent="."]
 position_smoothing_enabled = true
 
-[node name="StateMachine" type="Node2D" parent="."]
+[node name="StateMachine" type="Node" parent="."]
 script = ExtResource("3_qhqgy")
 
-[node name="Locked" type="Node2D" parent="StateMachine"]
+[node name="Locked" type="Node" parent="StateMachine"]
 script = ExtResource("4_ur7pv")
 
-[node name="Idle" type="Node2D" parent="StateMachine"]
+[node name="Idle" type="Node" parent="StateMachine"]
 script = ExtResource("4_dqkch")
 
-[node name="Run" type="Node2D" parent="StateMachine"]
+[node name="Run" type="Node" parent="StateMachine"]
 script = ExtResource("5_qlg0r")
 
-[node name="Jump" type="Node2D" parent="StateMachine"]
+[node name="Jump" type="Node" parent="StateMachine"]
 script = ExtResource("6_tuyoq")
 
-[node name="JumpPeak" type="Node2D" parent="StateMachine"]
+[node name="JumpPeak" type="Node" parent="StateMachine"]
 script = ExtResource("7_fjrip")
 
-[node name="Fall" type="Node2D" parent="StateMachine"]
+[node name="Fall" type="Node" parent="StateMachine"]
 script = ExtResource("8_smehm")
+
+[node name="Timers" type="Node" parent="."]
+
+[node name="JumpBufferTimer" type="Timer" parent="Timers"]
+one_shot = true
+
+[node name="CoyoteTimer" type="Timer" parent="Timers"]
+one_shot = true

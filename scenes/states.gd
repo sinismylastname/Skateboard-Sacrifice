@@ -1,4 +1,4 @@
-extends Node2D
+extends Node
 
 @onready var Locked = $Locked
 @onready var Idle = $Idle
