@@ -11,6 +11,7 @@ func ExitState():
 func Update(delta: float):
 	Player.handleHorizontalMovement()
 	Player.handleJump()
+	Player.handleDash()
 	handleJumpToFall()
 	handleAnimations()
 	

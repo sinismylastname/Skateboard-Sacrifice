@@ -15,22 +15,37 @@ var gravityForceFall := 1280
 var terminalVelocity := 1600
 var acceleration := 40
 
+var dashes = 0
+var dashDirection: Vector2
+var maxDashes = 1
+var dashSpeed = 1200
+var dashAccel = 4
+var dashTime = 0.25
+var dashBufferTime = 0.075
+var dashMomentumCarry = 0.5
+
+var squishX = 1.0
+var squishY = 1.0
+var squishStep = 0.02
+
 var keyUp = false
 var keyDown = false
 var keyLeft = false
 var keyRight = false
 var keyJump = false
+var keyDash = false
 var keyJumpPressed = false
 
 var amtOfJumps = 1
 var jumpCounter = amtOfJumps
-var jumpPower = -525
+var jumpPower = -400
 var variableJumpMultiplier := 0.75
 var jumpBufferTime = 0.45
 var coyoteTime = 0.1
 
 var currentState = null
 var previousState = null
+var nextState = null
 
 @onready var Collider = $Collider
 @onready var Sprite = $Sprite
@@ -39,6 +54,10 @@ var previousState = null
 @onready var States = $StateMachine
 @onready var jumpBufferTimer = $Timers/JumpBufferTimer
 @onready var coyoteTimer = $Timers/CoyoteTimer
+@onready var dashTimer: Timer = $Timers/DashTimer
+@onready var dashBuffer: Timer = $Timers/DashBuffer
+@onready var dashGhost: CPUParticles2D = $GraphicsEffects/Dash/DashTrail
+
 #endregion
 
 func _ready():
@@ -48,6 +67,7 @@ func _ready():
 		state.Player = self
 	previousState = States.Fall
 	currentState = States.Fall
+	setSquish(1.0, 1.0)
 
 #region State Handling
 	#region Idle Handling
@@ -96,11 +116,26 @@ func handleFall():
 
 func handleLanding():
 	if is_on_floor():
+		dashes = 0
 		ChangeState(States.Idle)
 
 func handleDash():
-	pass
+	if dashes < maxDashes:
+		if keyDash:
+			if dashTimer.time_left <= 0:
+				dashTimer.start(dashBufferTime)
+				await dashTimer.timeout
+				dashes += 1
+				ChangeState(States.Dash)
 
+func getDashDirection() -> Vector2:
+	var _dir = Vector2.ZERO
+	if !keyLeft and !keyRight and !keyUp and !keyDown:
+		_dir = Vector2(directionFacing, 0)
+	else:
+		_dir = Vector2(Input.get_axis("left", "right"), Input.get_axis("lookUp", "lookDown"))
+	return _dir
+		
 func handleGravity(delta, gravity: float = gravityForceJump):
 	if not is_on_floor():
 		velocity.y += gravity * delta
@@ -117,6 +152,7 @@ func getInputStates():
 	keyRight = Input.is_action_pressed("right")
 	keyJump = Input.is_action_pressed("jump")
 	keyJumpPressed = Input.is_action_just_pressed("jump")
+	keyDash = Input.is_action_pressed("dash")
 	
 	if keyRight: directionFacing = 1
 	if keyLeft: directionFacing = -1
@@ -124,23 +160,41 @@ func getInputStates():
 func handleFlipH():
 	Sprite.flip_h = (directionFacing < 0)
 
+func updateSquish(): 
+	Sprite.scale.x = squishX
+	Sprite.scale.y = squishY
+	
+	if squishX != 1.0: squishX = move_toward(squishX, 1.0, squishStep)
+	if squishY != 1.0: squishY = move_toward(squishY, 1.0, squishStep)
+
+func setSquish(_squishX: float = 1.0, _squishY: float = 1.0, _step: float = squishStep):
+	squishX = _squishX if (_squishX != 0) else 1.0
+	squishY = _squishY if (_squishY != 0) else 1.0
+	squishStep = _step if (_step != 0) else squishStep
+	
+
 func _draw():
 	currentState.Draw()
 
-func ChangeState(newState):
-	if newState != null:
-		previousState = currentState
-		currentState = newState
-		previousState.ExitState()
-		currentState.EnterState()
-		return
-		#print("State Change From " + previousState.Name + " to: " + currentState.Name)
-		
+func ChangeState(targetState):
+	if targetState:
+		nextState = targetState
 
+func handleStateChange():
+	if nextState != null:
+		if currentState != nextState:
+			previousState = currentState
+			currentState.ExitState()
+			currentState = null
+			currentState = nextState
+			currentState.EnterState()
+		nextState = null
+	
 func _physics_process(delta):
-	getInputStates()
 	handleGravity(delta)
-	handleFlipH()
+	getInputStates()
 	handleTerminalVelocity()
 	currentState.Update(delta)
 	move_and_slide()
+	updateSquish()
+	handleStateChange()

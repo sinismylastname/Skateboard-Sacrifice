@@ -11,6 +11,7 @@ func Update(delta: float):
 	Player.handleHorizontalMovement()
 	Player.handleJump()
 	Player.handleFall()
+	Player.handleDash()
 	handleAnimations()
 	handleIdle()
 

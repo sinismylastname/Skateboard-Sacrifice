@@ -13,6 +13,7 @@ func Update(delta: float):
 	Player.handleGravity(delta, Player.gravityForceFall)
 	Player.handleHorizontalMovement()
 	Player.handleJump()
+	Player.handleDash()
 	Player.handleJumpBuffer()
 	Player.handleLanding()
 	handleAnimations()
