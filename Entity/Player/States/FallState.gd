@@ -20,4 +20,4 @@ func Update(delta: float):
 	
 func handleAnimations():
 	Player.Animator.play("fall")
-	Player.handleFlipH
+	Player.handleFlipH()

@@ -16,6 +16,7 @@ var terminalVelocity := 1600
 var acceleration := 40
 
 var dashes = 0
+var dashCooldownTime = 0.1
 var dashDirection: Vector2
 var maxDashes = 1
 var dashSpeed = 1200
@@ -23,29 +24,35 @@ var dashAccel = 4
 var dashTime = 0.25
 var dashBufferTime = 0.075
 var dashMomentumCarry = 0.5
+var storedDashMomentum = 0
+var canUseDashMomentum = false
+var maxStoredMomentum = 4000
 
 var squishX = 1.0
 var squishY = 1.0
-var squishStep = 0.02
+var squishStep = 0.08
 
 var keyUp = false
 var keyDown = false
 var keyLeft = false
 var keyRight = false
 var keyJump = false
-var keyDash = false
+var keyDashPressed = false
 var keyJumpPressed = false
 
 var amtOfJumps = 1
 var jumpCounter = amtOfJumps
-var jumpPower = -400
+var jumpPower = -500
 var variableJumpMultiplier := 0.75
-var jumpBufferTime = 0.45
+var jumpBufferTime = 0.15
 var coyoteTime = 0.1
+var bhTime = 0.1
 
 var currentState = null
 var previousState = null
 var nextState = null
+
+var ui_scene = preload("res://scenes/MomentumGauge.tscn").instantiate()
 
 @onready var Collider = $Collider
 @onready var Sprite = $Sprite
@@ -53,12 +60,15 @@ var nextState = null
 @onready var Camera = $Camera
 @onready var States = $StateMachine
 @onready var jumpBufferTimer = $Timers/JumpBufferTimer
+@onready var bunnyHopTimer = $Timers/BunnyHopTimer
 @onready var coyoteTimer = $Timers/CoyoteTimer
 @onready var dashTimer: Timer = $Timers/DashTimer
 @onready var dashBuffer: Timer = $Timers/DashBuffer
+@onready var dashCooldownTimer: Timer = $Timers/DashCooldown
 @onready var dashGhost: CPUParticles2D = $GraphicsEffects/Dash/DashTrail
-
-#endregion
+@onready var momentumUI
+@onready var runningSound = $Sounds/Running
+@onready var jumpSound = $Sounds/Jumping
 
 func _ready():
 	Engine.time_scale = 1 #Slow or speed up the engine speed, for debugging
@@ -68,14 +78,16 @@ func _ready():
 	previousState = States.Fall
 	currentState = States.Fall
 	setSquish(1.0, 1.0)
+	get_parent().call_deferred("add_child", ui_scene)
+	momentumUI = ui_scene
 
-#region State Handling
-	#region Idle Handling
+func UpdateMomentumUI(value: float, max_value: float):
+	self.value = clamp(value, 0, max_value)
+
 func handleIdle():
 	if is_on_floor():
 		ChangeState(States.Idle)
-#endregion
-	#region Jump Handling
+
 func handleJump():
 	if is_on_floor():
 		if jumpCounter > 0:
@@ -103,9 +115,13 @@ func handleJumpBuffer():
 		jumpBufferTimer.start(jumpBufferTime)
 
 func handleHorizontalMovement():
-	if xDirection:
+	runningSound.play()
+	if xDirection and is_on_floor():
 		playerVelocity.x = xDirection * runSpeed
 		velocity.x = move_toward(velocity.x, playerVelocity.x, acceleration)
+	elif xDirection and not is_on_floor():
+		playerVelocity.x = xDirection * runSpeed
+		velocity.x = move_toward(velocity.x, playerVelocity.x, acceleration / 2)
 	else:
 		velocity.x = move_toward(velocity.x, 0, runSpeed)
 
@@ -115,13 +131,15 @@ func handleFall():
 		ChangeState(States.Fall)
 
 func handleLanding():
-	if is_on_floor():
+	if is_on_floor() and jumpBufferTimer.time_left <= 0:
 		dashes = 0
 		ChangeState(States.Idle)
+	elif is_on_floor() and jumpBufferTimer.time_left > 0:
+		ChangeState(States.Jump)
 
 func handleDash():
 	if dashes < maxDashes:
-		if keyDash:
+		if keyDashPressed:
 			if dashTimer.time_left <= 0:
 				dashTimer.start(dashBufferTime)
 				await dashTimer.timeout
@@ -152,7 +170,7 @@ func getInputStates():
 	keyRight = Input.is_action_pressed("right")
 	keyJump = Input.is_action_pressed("jump")
 	keyJumpPressed = Input.is_action_just_pressed("jump")
-	keyDash = Input.is_action_pressed("dash")
+	keyDashPressed = Input.is_action_just_pressed("dash")
 	
 	if keyRight: directionFacing = 1
 	if keyLeft: directionFacing = -1
@@ -191,7 +209,6 @@ func handleStateChange():
 		nextState = null
 	
 func _physics_process(delta):
-	handleGravity(delta)
 	getInputStates()
 	handleTerminalVelocity()
 	currentState.Update(delta)

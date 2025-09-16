@@ -20,14 +20,30 @@ func ExitState():
 	pass
 	
 func Update(delta: float):
+	handleDashCollide()
 	handleDashEnd()
 	handleAnimations()
-		
+	
 func handleDashEnd():
-	if Player.dashTimer.time_left <= 0:
+	if Player.dashTimer.time_left <= 0 or Player.is_on_floor():
 		Player.dashTimer.stop()
-		Player.velocity *= Player.dashMomentumCarry
-		Player.ChangeState(States.Fall)
+		
+		if Player.is_on_floor():
+			var momentumGain = abs(Player.dashDirection.x * Player.dashSpeed)
+			Player.storedDashMomentum += momentumGain * (1 - min(Player.storedDashMomentum / Player.maxStoredMomentum, 1)) / 2
+			Player.canUseDashMomentum = true
+			Player.dashes = 0
+			Player.ChangeState(States.Run)
+		else:
+			Player.velocity.x *= Player.dashMomentumCarry
+			Player.ChangeState(States.Fall)
+
+func handleDashCollide():
+	if Player.is_on_wall():
+		Player.dashTimer.stop()
+		Player.velocity += -2 * Player.velocity
+	if Player.velocity.y > 0 and Player.is_on_floor():
+		Player.dashTimer.stop()
 
 func handleAnimations():
 	Player.Animator.play("dash")

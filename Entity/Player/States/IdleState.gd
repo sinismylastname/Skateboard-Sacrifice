@@ -3,6 +3,7 @@ extends PlayerState
 func EnterState():
 	Name = "Idle"
 	Player.jumpCounter = Player.amtOfJumps
+	Player.dashes = 0
 	
 func ExitState():
 	pass
@@ -15,6 +16,7 @@ func Update(delta: float):
 	Player.handleJump()
 	Player.handleHorizontalMovement()
 	Player.handleDash()
+	Player.handleGravity(delta, Player.gravityForceFall)
 	if Player.xDirection != 0:
 		Player.ChangeState(States.Run)
 	HandleAnimations()

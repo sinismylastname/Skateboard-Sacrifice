@@ -3,8 +3,10 @@ extends PlayerState
 func EnterState():
 	Name = "Run"
 	Player.jumpCounter = Player.amtOfJumps
+	Player.dashes = 0
 
 func ExitState():
+	Player.runningSound.stop()
 	pass
 	
 func Update(delta: float):

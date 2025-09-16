@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://b725qhgke4ac4"]
+[gd_scene load_steps=21 format=3 uid="uid://b725qhgke4ac4"]
 
 [ext_resource type="Script" uid="uid://kpfqy50lo3cu" path="res://Entity/Player/player.gd" id="1_ur7pv"]
 [ext_resource type="Texture2D" uid="uid://b6lscprlm2epn" path="res://resources/Motion_animations_1_Spritelist.png" id="2_g2els"]
@@ -10,8 +10,6 @@
 [ext_resource type="Script" uid="uid://c488hoho83rgy" path="res://Entity/Player/States/JumpPeakState.gd" id="7_fjrip"]
 [ext_resource type="Script" uid="uid://bs2aaw2r0p18s" path="res://Entity/Player/States/FallState.gd" id="8_smehm"]
 [ext_resource type="Script" uid="uid://mmp36le5sfsp" path="res://scenes/DashState.gd" id="10_y4r1p"]
-[ext_resource type="AudioStream" uid="uid://cqybj6dt2n1pl" path="res://sounds/run-fast-345728.mp3" id="11_d2wvv"]
-[ext_resource type="AudioStream" uid="uid://cbowqbr16u186" path="res://sounds/cartoon-jump-6462.mp3" id="12_3v2ag"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_e80uo"]
 size = Vector2(28, 68)
@@ -195,11 +193,6 @@ one_shot = true
 [node name="DashBuffer" type="Timer" parent="Timers"]
 one_shot = true
 
-[node name="BunnyHopTimer" type="Timer" parent="Timers"]
-one_shot = true
-
-[node name="DashCooldown" type="Timer" parent="Timers"]
-
 [node name="GraphicsEffects" type="Node2D" parent="."]
 
 [node name="Dash" type="Node2D" parent="GraphicsEffects"]
@@ -215,11 +208,3 @@ gravity = Vector2(0, 0)
 scale_amount_min = 1.5
 scale_amount_max = 1.5
 color_ramp = SubResource("Gradient_y4r1p")
-
-[node name="Sounds" type="Node" parent="."]
-
-[node name="Running" type="AudioStreamPlayer" parent="Sounds"]
-stream = ExtResource("11_d2wvv")
-
-[node name="Jumping" type="AudioStreamPlayer" parent="Sounds"]
-stream = ExtResource("12_3v2ag")

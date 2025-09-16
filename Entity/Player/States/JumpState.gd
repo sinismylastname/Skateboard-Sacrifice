@@ -3,13 +3,21 @@ extends PlayerState
 func EnterState():
 	Name = "Jump"
 	Player.velocity.y = Player.jumpPower
-	print(Player.jumpCounter)
+	Player.jumpSound.play()
+	
+	if Player.canUseDashMomentum:
+		var dir = 1 if Player.keyRight else -1 if Player.keyLeft else 0
+		Player.velocity.x += dir * Player.storedDashMomentum
+		Player.storedDashMomentum = 0
+		Player.canUseDashMomentum = false
 	
 func ExitState():
+	Player.bunnyHopTimer.start(Player.bhTime)
 	pass
-	
+
 func Update(delta: float):
 	Player.handleHorizontalMovement()
+	Player.handleGravity(delta, Player.gravityForceFall)
 	Player.handleJump()
 	Player.handleDash()
 	handleJumpToFall()
