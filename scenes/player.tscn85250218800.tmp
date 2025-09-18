@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://b725qhgke4ac4"]
+[gd_scene load_steps=23 format=3 uid="uid://b725qhgke4ac4"]
 
 [ext_resource type="Script" uid="uid://c6susfv2q8nfp" path="res://scenes/Player.gd" id="1_3v2ag"]
 [ext_resource type="Texture2D" uid="uid://b6lscprlm2epn" path="res://resources/Motion_animations_1_Spritelist.png" id="2_g2els"]
@@ -7,16 +7,11 @@
 [ext_resource type="Script" uid="uid://6wvwd5ce1ooj" path="res://Entity/Player/States/NormalStates/normLockedState.gd" id="4_ur7pv"]
 [ext_resource type="Script" uid="uid://bp5hhtkhivfgw" path="res://Entity/Player/States/NormalStates/normRunState.gd" id="5_qlg0r"]
 [ext_resource type="Script" uid="uid://daecd6o58idvm" path="res://Entity/Player/States/NormalStates/normJumpState.gd" id="6_tuyoq"]
+[ext_resource type="Script" uid="uid://c488hoho83rgy" path="res://Entity/Player/States/NormalStates/normJumpPeakState.gd" id="7_fjrip"]
 [ext_resource type="Script" uid="uid://bs2aaw2r0p18s" path="res://Entity/Player/States/NormalStates/normFallState.gd" id="8_smehm"]
-[ext_resource type="Script" uid="uid://cblea6pg2k30f" path="res://Entity/Player/States/SkateboardState/skateLocked.gd" id="10_3v2ag"]
 [ext_resource type="Script" uid="uid://mmp36le5sfsp" path="res://Entity/Player/States/NormalStates/normDashState.gd" id="10_y4r1p"]
 [ext_resource type="AudioStream" uid="uid://cqybj6dt2n1pl" path="res://sounds/run-fast-345728.mp3" id="11_d2wvv"]
-[ext_resource type="Script" uid="uid://d1nabsabrm0wn" path="res://Entity/Player/States/SkateboardState/skateIdle.gd" id="11_jej6c"]
 [ext_resource type="AudioStream" uid="uid://cbowqbr16u186" path="res://sounds/cartoon-jump-6462.mp3" id="12_3v2ag"]
-[ext_resource type="Script" uid="uid://s83k352r5qnm" path="res://Entity/Player/States/SkateboardState/skateMove.gd" id="12_qfm1y"]
-[ext_resource type="Script" uid="uid://dwmg2vqwqdplg" path="res://Entity/Player/States/SkateboardState/skateJump.gd" id="13_fulsm"]
-[ext_resource type="Script" uid="uid://b4xme4v576kjy" path="res://Entity/Player/States/SkateboardState/skateFall.gd" id="14_4r5pv"]
-[ext_resource type="Script" uid="uid://did7eewk6bcxv" path="res://Entity/Player/States/SkateboardState/skateTrick.gd" id="15_60mlk"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_e80uo"]
 size = Vector2(28, 68)
@@ -179,6 +174,9 @@ script = ExtResource("5_qlg0r")
 [node name="Jump" type="Node" parent="StateMachine/Normal"]
 script = ExtResource("6_tuyoq")
 
+[node name="JumpPeak" type="Node" parent="StateMachine/Normal"]
+script = ExtResource("7_fjrip")
+
 [node name="Fall" type="Node" parent="StateMachine/Normal"]
 script = ExtResource("8_smehm")
 
@@ -188,22 +186,18 @@ script = ExtResource("10_y4r1p")
 [node name="Skateboard" type="Node" parent="StateMachine"]
 
 [node name="Locked" type="Node" parent="StateMachine/Skateboard"]
-script = ExtResource("10_3v2ag")
 
 [node name="Idle" type="Node" parent="StateMachine/Skateboard"]
-script = ExtResource("11_jej6c")
 
-[node name="Move" type="Node" parent="StateMachine/Skateboard"]
-script = ExtResource("12_qfm1y")
+[node name="Run" type="Node" parent="StateMachine/Skateboard"]
 
 [node name="Jump" type="Node" parent="StateMachine/Skateboard"]
-script = ExtResource("13_fulsm")
+
+[node name="JumpPeak" type="Node" parent="StateMachine/Skateboard"]
 
 [node name="Fall" type="Node" parent="StateMachine/Skateboard"]
-script = ExtResource("14_4r5pv")
 
-[node name="Trick" type="Node" parent="StateMachine/Skateboard"]
-script = ExtResource("15_60mlk")
+[node name="Dash" type="Node" parent="StateMachine/Skateboard"]
 
 [node name="Timers" type="Node" parent="."]
 

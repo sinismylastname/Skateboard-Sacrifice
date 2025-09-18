@@ -1,10 +1,7 @@
-extends CharacterBody2D
-
-#region Variables
-#need states for a lot of stuff, like start_dash, mid_dash, end_dash
+extends Node
 
 var playerVelocity = Vector2.ZERO
-var yDirection = Input.get_axis("right", "left")
+var yDirection = Input.get_axis("lookUp", "lookDown")
 var xDirection = Input.get_axis("left", "right")
 var allDirection = Input.get_vector("left", "right", "lookUp", "lookDown")
 var directionFacing = 1
@@ -14,6 +11,8 @@ var gravityForceJump := 980
 var gravityForceFall := 1280
 var terminalVelocity := 1600
 var acceleration := 40
+var velocity
+var touchingFloor
 
 var dashes = 0
 var dashCooldownTime = 0.1
@@ -54,29 +53,65 @@ var nextState = null
 
 var ui_scene = preload("res://scenes/MomentumGauge.tscn").instantiate()
 
-@onready var Collider = $Collider
-@onready var Sprite = $Sprite
-@onready var Animator = $Animator
-@onready var Camera = $Camera
-@onready var States = $StateMachine
-@onready var jumpBufferTimer = $Timers/JumpBufferTimer
-@onready var bunnyHopTimer = $Timers/BunnyHopTimer
-@onready var coyoteTimer = $Timers/CoyoteTimer
-@onready var dashTimer: Timer = $Timers/DashTimer
-@onready var dashBuffer: Timer = $Timers/DashBuffer
-@onready var dashCooldownTimer: Timer = $Timers/DashCooldown
-@onready var dashGhost: CPUParticles2D = $GraphicsEffects/Dash/DashTrail
-@onready var momentumUI
-@onready var runningSound = $Sounds/Running
-@onready var jumpSound = $Sounds/Jumping
+var Collider 
+var Sprite 
+var Animator 
+var Camera 
+var normalStates 
+var jumpBufferTimer 
+var coyoteTimer
+var dashTimer
+var dashBuffer
+var dashCooldownTimer
+var dashGhost
+var momentumUI
+var runningSound 
+var jumpSound 
+var Player
+
+var Idle 
+var Run 
+var Dash 
+var Fall 
+var Jump
+
+func _init(player):
+	Player = player
+	Collider = Player.get_node("Collider")
+	Sprite = Player.get_node("Sprite")
+	Animator = Player.get_node("Animator")
+	Camera = Player.get_node("Camera")
+	normalStates = Player.get_node("StateMachine/Normal")
+	jumpBufferTimer = Player.get_node("Timers/JumpBufferTimer")
+	coyoteTimer = Player.get_node("Timers/CoyoteTimer")
+	dashTimer = Player.get_node("Timers/DashTimer")
+	dashBuffer = Player.get_node("Timers/DashBuffer")
+	dashCooldownTimer = Player.get_node("Timers/DashCooldown")
+	dashGhost = Player.get_node("GraphicsEffects/Dash/DashTrail")
+	
+	for state in normalStates.get_children():
+		state.States = normalStates
+		state.Player = Player
+		state.Machine = self
+		#state.Idle = normalStates.get_node("Idle")
+		#state.Run = normalStates.get_node("Run")
+		#state.Dash = normalStates.get_node("Dash")
+		#state.Fall = normalStates.get_node("Fall")
+		#state.Jump = normalStates.get_node("Jump")
 
 func _ready():
+	Idle = normalStates.get_node("Idle")
+	Run = normalStates.get_node("Run")
+	Dash = normalStates.get_node("Dash")
+	Fall = normalStates.get_node("Fall")
+	Jump = normalStates.get_node("Jump")
+	
+	previousState = Fall
+	currentState = Fall
+	currentState.EnterState()
+	
 	Engine.time_scale = 1 #Slow or speed up the engine speed, for debugging
-	for state in States.get_children():
-		state.States = States
-		state.Player = self
-	previousState = States.Fall
-	currentState = States.Fall
+
 	setSquish(1.0, 1.0)
 	get_parent().call_deferred("add_child", ui_scene)
 	momentumUI = ui_scene
@@ -85,57 +120,57 @@ func UpdateMomentumUI(value: float, max_value: float):
 	self.value = clamp(value, 0, max_value)
 
 func handleIdle():
-	if is_on_floor():
-		ChangeState(States.Idle)
+	if touchingFloor:
+		ChangeState(Idle)
 
 func handleJump():
-	if is_on_floor():
+	if touchingFloor:
 		if jumpCounter > 0:
 			if keyJumpPressed:
 				jumpBufferTimer.stop()
 				jumpCounter -= 1
-				ChangeState(States.Jump)
+				ChangeState(Jump)
 			if (jumpBufferTimer.time_left > 0):
 				jumpCounter -= 1
 				jumpBufferTimer.stop()
-				ChangeState(States.Jump)
+				ChangeState(Jump)
 	else:
 		if jumpCounter > 0 and jumpCounter < amtOfJumps and keyJumpPressed:
 			jumpCounter -= 1
-			ChangeState(States.Jump)
+			ChangeState(Jump)
 			
 		if coyoteTimer.time_left > 0:
 			if keyJumpPressed and jumpCounter > 0:
 				coyoteTimer.stop()
 				jumpCounter -= 1
-				ChangeState(States.Jump)
+				ChangeState(Jump)
 
 func handleJumpBuffer():
 	if keyJumpPressed:
 		jumpBufferTimer.start(jumpBufferTime)
 
 func handleHorizontalMovement():
-	runningSound.play()
-	if xDirection and is_on_floor():
+	#runningSound.play()
+	if xDirection and touchingFloor:
 		playerVelocity.x = xDirection * runSpeed
 		velocity.x = move_toward(velocity.x, playerVelocity.x, acceleration)
-	elif xDirection and not is_on_floor():
+	elif xDirection and not touchingFloor:
 		playerVelocity.x = xDirection * runSpeed
 		velocity.x = move_toward(velocity.x, playerVelocity.x, acceleration / 2)
 	else:
 		velocity.x = move_toward(velocity.x, 0, runSpeed)
 
 func handleFall():
-	if !is_on_floor():
+	if !touchingFloor:
 		coyoteTimer.start(coyoteTime)
-		ChangeState(States.Fall)
+		ChangeState(Fall)
 
 func handleLanding():
-	if is_on_floor() and jumpBufferTimer.time_left <= 0:
+	if touchingFloor and jumpBufferTimer.time_left <= 0:
 		dashes = 0
-		ChangeState(States.Idle)
-	elif is_on_floor() and jumpBufferTimer.time_left > 0:
-		ChangeState(States.Jump)
+		ChangeState(Idle)
+	elif touchingFloor and jumpBufferTimer.time_left > 0:
+		ChangeState(Jump)
 
 func handleDash():
 	if dashes < maxDashes:
@@ -144,7 +179,7 @@ func handleDash():
 				dashTimer.start(dashBufferTime)
 				await dashTimer.timeout
 				dashes += 1
-				ChangeState(States.Dash)
+				ChangeState(Dash)
 
 func getDashDirection() -> Vector2:
 	var _dir = Vector2.ZERO
@@ -155,7 +190,7 @@ func getDashDirection() -> Vector2:
 	return _dir
 		
 func handleGravity(delta, gravity: float = gravityForceJump):
-	if not is_on_floor():
+	if not touchingFloor:
 		velocity.y += gravity * delta
 
 func handleTerminalVelocity():
@@ -189,10 +224,6 @@ func setSquish(_squishX: float = 1.0, _squishY: float = 1.0, _step: float = squi
 	squishX = _squishX if (_squishX != 0) else 1.0
 	squishY = _squishY if (_squishY != 0) else 1.0
 	squishStep = _step if (_step != 0) else squishStep
-	
-
-func _draw():
-	currentState.Draw()
 
 func ChangeState(targetState):
 	if targetState:
@@ -208,10 +239,12 @@ func handleStateChange():
 			currentState.EnterState()
 		nextState = null
 	
-func _physics_process(delta):
+func update(delta):
+	touchingFloor = Player.touchingFloor
+	velocity = Player.velocity
 	getInputStates()
 	handleTerminalVelocity()
 	currentState.Update(delta)
-	move_and_slide()
 	updateSquish()
 	handleStateChange()
+	Player.velocity = velocity
